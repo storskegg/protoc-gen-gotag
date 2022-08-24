@@ -90,6 +90,7 @@ func newTagExtractor(d pgs.DebuggerCommon, ctx pgsgo.Context, autoTags []string)
 }
 
 func (v *tagExtractor) VisitOneOf(o pgs.OneOf) (pgs.Visitor, error) {
+	v.DebuggerCommon.Log("XXX LIAM - ping")
 	var tval string
 	ok, err := o.Extension(tagger.E_OneofTags, &tval)
 	if err != nil {

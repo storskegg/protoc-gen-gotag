@@ -30,13 +30,18 @@ type tagExtractor struct {
 func newTagExtractor(d pgs.DebuggerCommon, ctx pgsgo.Context, autoTags []string) *tagExtractor {
 	v := &tagExtractor{DebuggerCommon: d, Context: ctx, autoAddTags: map[string]*autoAddTagsTransformer{}}
 	v.Visitor = pgs.PassThroughVisitor(v)
+	var tagOrig string
 	for _, autoTag := range autoTags {
 		info := strings.Split(autoTag, "-as-")
 		tagName := info[0]
+		tagOrig = tagName
+
 		omitempty := strings.HasSuffix(tagName, omitEmptyStr)
+
 		if omitempty {
 			tagName = strings.TrimSuffix(tagName, omitEmptyStr)
 		}
+
 		if len(info) == 1 {
 			v.autoAddTags[tagName] = &autoAddTagsTransformer{
 				Omitempty: omitempty,
@@ -77,6 +82,9 @@ func newTagExtractor(d pgs.DebuggerCommon, ctx pgsgo.Context, autoTags []string)
 			}
 		}
 
+		if omitempty {
+			delete(v.autoAddTags, tagOrig)
+		}
 	}
 	return v
 }

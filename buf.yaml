@@ -1,5 +1,5 @@
 version: v1
-name: buf.build/srikrsna/protoc-gen-gotag
+name: buf.build/storskegg/protoc-gen-gotag
 deps:
   -  buf.build/googleapis/googleapis
 

@@ -6,9 +6,13 @@ import (
 	"github.com/fatih/structtag"
 	pgs "github.com/lyft/protoc-gen-star"
 	pgsgo "github.com/lyft/protoc-gen-star/lang/go"
-
-	"github.com/srikrsna/protoc-gen-gotag/tagger"
+	"github.com/storskegg/protoc-gen-gotag/tagger"
 )
+
+type autoAddTagsTransformer struct {
+	Omitempty bool
+	NameFunc  func(name pgs.Name) pgs.Name
+}
 
 type tagExtractor struct {
 	pgs.Visitor
@@ -16,31 +20,56 @@ type tagExtractor struct {
 	pgsgo.Context
 
 	tags        map[string]map[string]*structtag.Tags
-	autoAddTags map[string]func(name pgs.Name) pgs.Name
+	autoAddTags map[string]*autoAddTagsTransformer
 }
 
 func newTagExtractor(d pgs.DebuggerCommon, ctx pgsgo.Context, autoTags []string) *tagExtractor {
-	v := &tagExtractor{DebuggerCommon: d, Context: ctx, autoAddTags: map[string]func(name pgs.Name) pgs.Name{}}
+	v := &tagExtractor{DebuggerCommon: d, Context: ctx, autoAddTags: map[string]*autoAddTagsTransformer{}}
 	v.Visitor = pgs.PassThroughVisitor(v)
 	for _, autoTag := range autoTags {
 		info := strings.Split(autoTag, "-as-")
 		tagName := info[0]
+		omitempty := strings.HasSuffix(tagName, "-with-omitempty")
+		if omitempty {
+			tagName = strings.TrimSuffix(tagName, "-with-omitempty")
+		}
 		if len(info) == 1 {
-			v.autoAddTags[tagName] = pgs.Name.LowerSnakeCase
+			v.autoAddTags[tagName] = &autoAddTagsTransformer{
+				Omitempty: omitempty,
+				NameFunc:  pgs.Name.LowerSnakeCase,
+			}
 		} else {
 			switch strings.ToLower(info[1]) {
 			case "lower_snake", "lower_snake_case", "snake", "snake_case":
-				v.autoAddTags[tagName] = pgs.Name.LowerSnakeCase
+				v.autoAddTags[tagName] = &autoAddTagsTransformer{
+					Omitempty: omitempty,
+					NameFunc:  pgs.Name.LowerSnakeCase,
+				}
 			case "upper_snake", "upper_snake_case":
-				v.autoAddTags[tagName] = pgs.Name.UpperSnakeCase
+				v.autoAddTags[tagName] = &autoAddTagsTransformer{
+					Omitempty: omitempty,
+					NameFunc:  pgs.Name.UpperSnakeCase,
+				}
 			case "lower_camel", "lower_camel_case", "camel", "camel_case":
-				v.autoAddTags[tagName] = pgs.Name.LowerCamelCase
+				v.autoAddTags[tagName] = &autoAddTagsTransformer{
+					Omitempty: omitempty,
+					NameFunc:  pgs.Name.LowerCamelCase,
+				}
 			case "upper_camel", "upper_camel_case":
-				v.autoAddTags[tagName] = pgs.Name.UpperCamelCase
+				v.autoAddTags[tagName] = &autoAddTagsTransformer{
+					Omitempty: omitempty,
+					NameFunc:  pgs.Name.UpperCamelCase,
+				}
 			case "dot_notation", "dot", "lower_dot_notation", "lower_dot":
-				v.autoAddTags[tagName] = pgs.Name.LowerDotNotation
+				v.autoAddTags[tagName] = &autoAddTagsTransformer{
+					Omitempty: omitempty,
+					NameFunc:  pgs.Name.LowerDotNotation,
+				}
 			case "upper_dot", "upper_dot_notation":
-				v.autoAddTags[tagName] = pgs.Name.UpperDotNotation
+				v.autoAddTags[tagName] = &autoAddTagsTransformer{
+					Omitempty: omitempty,
+					NameFunc:  pgs.Name.UpperDotNotation,
+				}
 			}
 		}
 
@@ -93,12 +122,21 @@ func (v *tagExtractor) VisitField(f pgs.Field) (pgs.Visitor, error) {
 
 	tags := structtag.Tags{}
 	if len(v.autoAddTags) > 0 {
-		for tag, transform := range v.autoAddTags {
+		for tag, transformer := range v.autoAddTags {
 			t := structtag.Tag{
 				Key:     tag,
-				Name:    transform(v.Context.Name(f)).String(),
+				Name:    transformer.NameFunc(v.Context.Name(f)).String(),
 				Options: nil,
 			}
+
+			if transformer.Omitempty {
+				if tag == "graphql" {
+					t.Options = []string{"optional"}
+				} else {
+					t.Options = []string{"omitempty"}
+				}
+			}
+
 			if err := tags.Set(&t); err != nil {
 				v.DebuggerCommon.Fail("Error without tag", err)
 			}

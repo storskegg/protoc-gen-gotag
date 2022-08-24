@@ -7,7 +7,7 @@ import (
 
 	pgs "github.com/lyft/protoc-gen-star"
 	"github.com/spf13/afero"
-	"github.com/srikrsna/protoc-gen-gotag/module"
+	"github.com/storskegg/protoc-gen-gotag/module"
 )
 
 func TestExtract(t *testing.T) {

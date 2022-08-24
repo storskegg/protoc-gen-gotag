@@ -128,6 +128,8 @@ func (v *tagExtractor) VisitField(f pgs.Field) (pgs.Visitor, error) {
 	if len(v.autoAddTags) > 0 {
 		for tag, transformer := range v.autoAddTags {
 			v.DebuggerCommon.Log("XXX LIAM -- tag:", tag)
+			v.DebuggerCommon.Debug("XXX LIAM -- tag:", tag)
+			v.DebuggerCommon.Fail("XXX LIAM -- tag:", tag)
 
 			if strings.HasSuffix(tag, omitEmptyStr) {
 				continue

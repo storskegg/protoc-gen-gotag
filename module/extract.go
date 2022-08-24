@@ -9,6 +9,10 @@ import (
 	"github.com/storskegg/protoc-gen-gotag/tagger"
 )
 
+const (
+	omitEmptyStr = "-with-omitempty"
+)
+
 type autoAddTagsTransformer struct {
 	Omitempty bool
 	NameFunc  func(name pgs.Name) pgs.Name
@@ -29,9 +33,9 @@ func newTagExtractor(d pgs.DebuggerCommon, ctx pgsgo.Context, autoTags []string)
 	for _, autoTag := range autoTags {
 		info := strings.Split(autoTag, "-as-")
 		tagName := info[0]
-		omitempty := strings.HasSuffix(tagName, "-with-omitempty")
+		omitempty := strings.HasSuffix(tagName, omitEmptyStr)
 		if omitempty {
-			tagName = strings.TrimSuffix(tagName, "-with-omitempty")
+			tagName = strings.TrimSuffix(tagName, omitEmptyStr)
 		}
 		if len(info) == 1 {
 			v.autoAddTags[tagName] = &autoAddTagsTransformer{
@@ -123,6 +127,11 @@ func (v *tagExtractor) VisitField(f pgs.Field) (pgs.Visitor, error) {
 	tags := structtag.Tags{}
 	if len(v.autoAddTags) > 0 {
 		for tag, transformer := range v.autoAddTags {
+			v.DebuggerCommon.Log("XXX LIAM -- tag:", tag)
+
+			if strings.HasSuffix(tag, omitEmptyStr) {
+				continue
+			}
 			t := structtag.Tag{
 				Key:     tag,
 				Name:    transformer.NameFunc(v.Context.Name(f)).String(),

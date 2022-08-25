@@ -112,9 +112,6 @@ func (v *tagExtractor) VisitOneOf(o pgs.OneOf) (pgs.Visitor, error) {
 	}
 
 	v.tags[msgName][v.Context.Name(o).String()] = tags
-	v.DebuggerCommon.Log("XXX LIAM VisitOneOf() - msgName", msgName)
-	v.DebuggerCommon.Log("XXX LIAM VisitOneOf() - Name(o)", v.Context.Name(o).String())
-	v.DebuggerCommon.Log("XXX LIAM VisitOneOf() - tags", tags)
 
 	return v, nil
 }
@@ -138,7 +135,6 @@ func (v *tagExtractor) VisitField(f pgs.Field) (pgs.Visitor, error) {
 	tags := structtag.Tags{}
 	if len(v.autoAddTags) > 0 {
 		for tag, transformer := range v.autoAddTags {
-			v.DebuggerCommon.Log("XXX LIAM -- tag:", tag)
 
 			if strings.HasSuffix(tag, omitEmptyStr) {
 				continue

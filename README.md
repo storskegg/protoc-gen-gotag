@@ -3,6 +3,10 @@
 PGGT is a protoc plugin used to add/replace struct tags on generated protobuf messages.
 Get  it using ```go get github.com/storskegg/protoc-gen-gotag ```It supports the following features,
 
+## Installing Locally
+
+Both `go get` and `go install` can be unreliable. Clone this repo into your `$GOPATH`, and run make from the project root.
+
 ## Add/Replace Tags
 
 New tags like xml, sql, bson etc... can be added to struct messages of protobuf. Example
